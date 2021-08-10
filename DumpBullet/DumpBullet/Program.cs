@@ -24,17 +24,17 @@ namespace DumpBullet
             try
             {
 
-                var _client = new HttpRequest() { Authorization = apiKey };
-
-                var getConfigs = _client.Get(readUrl).ToBytes();
-
-                var zip = new ZipArchive(new MemoryStream(getConfigs), ZipArchiveMode.Read);
-
-                Directory.CreateDirectory(zip.Entries.ToString().Substring(0, zip.Entries.ToString().IndexOf("\\")));
-
-                foreach (var entry in zip.Entries)
+                HttpRequest httpRequest = new HttpRequest
                 {
-                    File.AppendAllText($"{entry}", new StreamReader( stream: entry.Open() ).ReadToEnd());
+                    AcceptEncoding = "gzip, deflate",
+                    Authorization = apiKey
+                };
+                byte[] buffer = httpRequest.Get(readUrl, null).ToBytes();
+                ZipArchive zipArchive = new ZipArchive(new MemoryStream(buffer), ZipArchiveMode.Read);
+                foreach (ZipArchiveEntry zipArchiveEntry in zipArchive.Entries)
+                {
+                    Directory.CreateDirectory(zipArchiveEntry.ToString().Substring(0, zipArchiveEntry.ToString().IndexOf("\\")));
+                    File.AppendAllText(string.Format("{0}", zipArchiveEntry), new StreamReader(zipArchiveEntry.Open()).ReadToEnd());
                 }
 
             }
